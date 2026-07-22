@@ -11,26 +11,6 @@ on valley bottom flatness, and applies a seasonal bias term that can be either a
 single global constant or a spatially varying field:
 
 ```
-T(x,t) = T_fpl(x,t)
-       + [alpha_i + exp(alpha_s * h(x)) - 1] * DT(x,t)
-       + lambda * Vnorm(x) * DT(x,t)
-       + beta_amp(x) * cos(2*pi*(t - t_star(x))) + beta_bias(x)
-
-h(x)   = H(x) * (1 - S_L(x)) + S_L(x)
-S_L(x) = exp(-R(x) / gamma_L)
-DT = T_sur - T_cpl
-```
-
-| symbol | meaning | unit |
-| --- | --- | --- |
-| `T_fpl` | pressure-level temperature at the fine-scale (DEM) elevation | °C |
-| `T_cpl` | pressure-level temperature at the ERA5 grid-cell elevation | °C |
-| `T_sur` | ERA5 2 m air temperature | °C |
-| `DT` | surface-effect proxy | °C |
-| `H` | hypsometric position (1 at valley bottom, 0 at summit) | – |
-| `R` | elevation range within the analysis neighbourhood | m |
-| `Vnorm` | normalized valley bottom flatness, MRVBF / MRVBF_max | – |
-| `beta_*` | seasonal bias components | °C, – |
 
 ---
 
