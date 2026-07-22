@@ -11,14 +11,7 @@ on valley bottom flatness, and applies a seasonal bias term that can be either a
 single global constant or a spatially varying field:
 
 ```
-T(x,t) = T_fpl(x,t)
-       + [alpha_i + exp(alpha_s * h(x)) - 1] * DT(x,t)
-       + lambda * Vnorm(x) * DT(x,t)
-       + beta_amp(x) * cos(2*pi*(t - t_star(x))) + beta_bias(x)
 
-h(x)   = H(x) * (1 - S_L(x)) + S_L(x)
-S_L(x) = exp(-R(x) / gamma_L)
-DT = T_sur - T_cpl
 ```
 
 | symbol | meaning | unit |
