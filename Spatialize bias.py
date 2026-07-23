@@ -1,10 +1,9 @@
 """
 spatialize_bias.py
 ==================
-Step 3b: spatialization of the seasonal bias coefficients by regression
-kriging.
+spatialization of the seasonal bias coefficients by regression kriging.
 
-Each of the three coefficients extracted per station in step 3a
+Each of the three coefficients extracted per station
 (beta_bias, beta_amp, t_star) is generalized to a continuous field, and
 independently, by the same two-step method:
 
@@ -22,9 +21,6 @@ fitted station values exactly at the stations.
 
 Covariates:
   longitude, latitude, elevation, dZ, northness, slope, svf
-The terrain predictors carried by the physical terms of CRISP (H, R, Vnorm)
-are deliberately excluded, so that the same terrain-temperature relationship
-is not expressed twice.
 
 Outputs (in OUT_DIR), selected with OUTPUT_MODE:
 
@@ -42,9 +38,7 @@ Outputs (in OUT_DIR), selected with OUTPUT_MODE:
 
 These feed run_downscaling.py: the prediction CSV is read by the point
 product (the beta of each point is taken directly from it), and the three
-GeoTIFFs are read by the gridded product. Points deliberately do not use the
-rasters, since sampling a rasterised field back at a point would interpolate
-twice and carry the rasterisation error.
+GeoTIFFs are read by the gridded product.
 
 All user configuration is in the block below.
 """
@@ -61,7 +55,7 @@ from pykrige.ok import OrdinaryKriging
 # ============================================================
 # 1. Path configuration
 # ============================================================
-# Input: the per-station beta + covariate CSV from step 3a.
+# Input: the per-station beta + covariate CSV
 BETA_CSV = r'PATH\TO\stations_Beta_and_Covariates.csv'
 OUT_DIR  = r'PATH\TO\OUTPUT_FOLDER'
 
@@ -80,11 +74,11 @@ OUTPUT_MODE = 'both'
 if OUTPUT_MODE not in ('points', 'grid', 'both'):
     raise ValueError("OUTPUT_MODE must be 'points', 'grid' or 'both'")
 
-# Fine-scale DEM (WGS84 NetCDF), defining the target grid and providing the
+# Fine-scale DEM , defining the target grid and providing the
 # longitude/latitude/elevation covariates. Required for 'grid' and 'both'.
 DEM_FINE_NC = r'PATH\TO\DEM.nc'
 
-# Covariate rasters (WGS84 GeoTIFF). Required for 'grid' and 'both'.
+# Covariate rasters . Required for 'grid' and 'both'.
 # longitude / latitude come from DEM_FINE_NC; elevation is read from it too.
 COV_DIR = r'PATH\TO\COVARIATE_FOLDER'
 GLOBAL_RASTER_FILES = {
@@ -111,16 +105,20 @@ COMPONENTS = ('beta_bias', 'beta_amp', 't_star')
 # ============================================================
 # n_estimators and max_features are fixed; the leaf size and the depth, which
 # control overfitting on a small station network, are selected by
-# cross-validation. Use larger leaf sizes and shallower trees for sparser
-# networks.
+# cross-validation within the training set.
+#
+# The grid below is an EXAMPLE and is meant to be adapted to the station
+# network at hand; it is not a recommended default. Denser networks support
+# deeper trees and smaller leaves, sparser networks need shallower trees and
+# larger leaves, otherwise the trend overfits. Widen or shift the grid as the
+# data require.
 RF_PARAM_GRID = {
-    'min_samples_leaf': [10, 15, 20, 25],
-    'max_depth':        [4, 6, 8, None],
+    'min_samples_leaf': [5, 10, 15, 20, 25],
+    'max_depth':        [4, 6, 8, 12, 20, None],
 }
 RF_FIXED = dict(n_estimators=300, max_features='sqrt', random_state=42, n_jobs=1)
 
 N_CV = 5
-
 
 # ============================================================
 # 4. Data loading
@@ -216,7 +214,6 @@ def fit_rf(df_train, df_val, target, tune=True):
         'rf_val_RMSE': rmse_val, 'rf_val_R2': r2_val,
     }
 
-
 # ============================================================
 # 6. Ordinary kriging of the RF residuals
 # ============================================================
@@ -240,7 +237,6 @@ def krige_residuals(df_train, df_val, residual_train, variogram_model):
         'nugget_ratio': nugget_ratio,
     }
 
-
 def select_variogram(df_train, df_val, residual_train, residual_val_true,
                      target):
     """Choose the variogram model minimising the validation residual RMSE."""
@@ -261,7 +257,6 @@ def select_variogram(df_train, df_val, residual_train, residual_val_true,
         best_model = 'spherical'
     print(f"    selected: {best_model}")
     return best_model, best_res
-
 
 # ============================================================
 # 7. Gridded fields
